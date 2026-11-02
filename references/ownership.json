@@ -1,0 +1,50 @@
+{
+  "about": "Compile-error ownership for Stage B. scripts/extract_run.py tests each error against these rules in order; the first match wins. `path` is a regex on the repo-relative file path, `text` is a regex on the compiler message plus javac symbol/location lines plus the source line. A rule with both needs both. `build-script` is resolved by git blame to the phase id in the commit subject of the line's last change. Unmatched errors are `unowned`; the orchestrator routes them and records an ownership gap in findings.md for the next enhance pass.",
+  "rules": [
+    { "phase": "build-script", "path": "(^|/)(build|settings)\\.gradle(\\.kts)?$|(^|/)pom\\.xml$|(^|/)gradle\\.properties$|\\.versions\\.toml$" },
+
+    { "phase": "05-openapi-generator", "path": "(^|/)build/(generate-resources|generated[^/]*/openapi)/" },
+    { "phase": "15-protobuf-protoc", "path": "(^|/)build/generated/sources?/proto/" },
+    { "phase": "14-jsonschema2pojo", "path": "(^|/)build/generated-sources/js2p/" },
+    { "phase": "17-mapstruct", "path": "(^|/)build/generated/(sources/annotationProcessor|source/kapt)/", "text": "org\\.mapstruct|MapperImpl" },
+    { "phase": "33-jpa-spring-data", "path": "(^|/)build/generated/(sources/annotationProcessor|source/kapt)/", "text": "metamodel|StaticMetamodel" },
+
+    { "phase": "01-platform-baseline", "text": "Unsupported class file major version|release version \\d+ not supported|invalid (source|target) release|has been compiled by a more recent version|class file has wrong version" },
+
+    { "phase": "36-junit-jupiter", "text": "\\borg\\.junit\\.(Test|Assert|Assume|Before|After|BeforeClass|AfterClass|Ignore|Rule|ClassRule|runner|runners|rules|experimental)\\b|\\bjunit\\.framework\\b|\\bRunWith\\b|SpringRunner|SpringJUnit4ClassRunner|MockitoJUnitRunner|junit-vintage|MethodOrderer\\.Alphanumeric|getOrComputeIfAbsent|junit-platform-runner|junit-platform-jfr|junit-platform-suite-commons|UseTechnicalNames|interceptDynamicTest" },
+    { "phase": "28-okhttp-5", "text": "okhttp3\\.mockwebserver|mockwebserver3|\\bMockWebServer\\b|\\bMockResponse\\b|\\bRecordedRequest\\b" },
+    { "phase": "09-testing", "text": "\\bMockBean\\b|\\bSpyBean\\b|org\\.springframework\\.boot\\.test\\.mock\\.mockito|LocalServerPort|org\\.springframework\\.boot\\.test\\.autoconfigure|AutoConfigureMockMvc|AutoConfigureWebTestClient|WebMvcTest|DataJpaTest|TestRestTemplate|com\\.github\\.javafaker|io\\.kotest|ResponseEntityExceptionHandler|HttpStatusCode|NoResourceFoundException|handleMethodArgumentNotValid|handleTypeMismatch" },
+    { "phase": "25-testcontainers-2", "text": "org\\.testcontainers" },
+    { "phase": "26-rest-assured-6", "text": "io\\.restassured" },
+    { "phase": "27-mockserver-9", "text": "org\\.mockserver" },
+    { "phase": "16-cucumber-8", "text": "io\\.cucumber" },
+
+    { "phase": "02-jakarta-ee", "text": "\\bjavax\\.(persistence|servlet|validation|transaction|inject|ws\\.rs|xml\\.bind|mail|jms|websocket|annotation\\.(PostConstruct|PreDestroy|Resource|Priority|Generated))" },
+    { "phase": "43-pubsub", "text": "JacksonPubSubMessageConverter|PubSubMessageConverter|PubSubTemplate|PubSubInboundChannelAdapter|PubSubMessageHandler|PubSubSubscriberTemplate|BasicAcknowledgeablePubsubMessage|AcknowledgeablePubsubMessage|GcpPubSubHeaders|PubSubHealthIndicator|com\\.google\\.cloud\\.spring\\.pubsub|com\\.google\\.cloud\\.pubsub" },
+    { "phase": "44-spring-kafka-4", "text": "org\\.springframework\\.kafka|EmbeddedKafkaZKBroker|EmbeddedKafka|KafkaListener|RetryableTopic|StreamsBuilderFactoryBeanCustomizer|spring-kafka-test" },
+    { "phase": "04-jackson-3", "text": "com\\.fasterxml\\.jackson\\.(databind|core|module|datatype|dataformat)|tools\\.jackson|\\bObjectMapper\\b|JsonProcessingException|JsonMappingException|\\bJsonNode\\b|JsonComponent|JsonMixin|Jackson2ObjectMapperBuilder|MappingJackson2|\\bJsonMapper\\b|SerializerProvider|SerializationProvider" },
+    { "phase": "03-hibernate-7", "text": "org\\.hibernate|\\bTypeDef\\b|\\bLazyCollection\\b|com\\.vladmihalcea|io\\.hypersistence|\\bUserType\\b|IdentifierGenerator|GenericGenerator" },
+    { "phase": "33-jpa-spring-data", "text": "\\bgetOne\\b|\\bgetById\\b|deleteInBatch|org\\.springframework\\.data|org\\.springframework\\.boot\\.orm\\.jpa|EntityManagerFactoryBuilder|\\bEntityScan\\b|jakarta\\.persistence|QueryEnhancer|NamingStrategy" },
+    { "phase": "20-spring-security-7", "text": "org\\.springframework\\.security|WebSecurityConfigurerAdapter|authorizeRequests|antMatchers|mvcMatchers|EnableGlobalMethodSecurity|SecurityFilterChain" },
+    { "phase": "34-spring-cloud-gcp", "text": "com\\.google\\.cloud\\.spring|com\\.google\\.cloud\\.pubsub|ListenableFuture|addCallback|\\.completable\\(\\)|\\bAsyncResult\\b|PubSubTemplate" },
+    { "phase": "41-spring-retry-framework", "text": "org\\.springframework\\.retry|org\\.springframework\\.resilience|\\bRetryable\\b|@Recover\\b|EnableRetry|RetryTemplate" },
+    { "phase": "40-resilience4j-boot4", "text": "io\\.github\\.resilience4j" },
+    { "phase": "38-remove-vavr", "text": "io\\.vavr" },
+    { "phase": "07-observability", "text": "org\\.springframework\\.cloud\\.sleuth|\\bbrave\\.|io\\.micrometer\\.tracing|io\\.opentelemetry" },
+    { "phase": "22-actuator", "text": "org\\.springframework\\.boot\\.actuate|io\\.micrometer\\.core|MeterRegistry|HealthIndicator|InfoContributor|MeterBinder" },
+    { "phase": "35-webflux", "text": "org\\.springframework\\.web\\.reactive|reactor\\.netty|org\\.springframework\\.http\\.codec|ServerWebExchange|Jackson2JsonEncoder|Jackson2JsonDecoder" },
+    { "phase": "19-modular-starters", "text": "org\\.springframework\\.boot\\.(web\\.embedded|web\\.servlet|web\\.client|autoconfigure|tomcat|jetty|jdbc|restclient|http)|TomcatServletWebServerFactory|WebServerFactoryCustomizer|TomcatConnectorCustomizer|RestTemplateBuilder" },
+    { "phase": "06-http-clients", "text": "\\bHttpHeaders\\b|RestTemplate|feign|openfeign|ClientHttpRequestFactory|org\\.apache\\.hc|org\\.apache\\.http\\b|\\bRestClient\\b" },
+    { "phase": "24-tomcat-boot-managed", "text": "org\\.apache\\.(tomcat|catalina|coyote)" },
+    { "phase": "11-distributed-lock", "text": "com\\.github\\.alturkovic|net\\.javacrumbs\\.shedlock|JdbcLocked|LockProvider" },
+    { "phase": "17-mapstruct", "text": "org\\.mapstruct" },
+    { "phase": "32-springdoc-openapi", "text": "org\\.springdoc|springfox|io\\.swagger|knife4j|com\\.github\\.xiaoymin" },
+    { "phase": "29-nimbus-jose-jwt-10", "text": "com\\.nimbusds" },
+    { "phase": "30-launchdarkly-7", "text": "com\\.launchdarkly|\\bLDUser\\b|\\bLDContext\\b" },
+    { "phase": "08-flyway-db", "text": "org\\.flywaydb" },
+    { "phase": "15-protobuf-protoc", "text": "com\\.google\\.protobuf|GeneratedMessageV3" },
+    { "phase": "12-dependency-bump-queue", "text": "org\\.apache\\.commons|net\\.datafaker|org\\.awaitility|com\\.opencsv|com\\.atlassian\\.oai|io\\.jsonwebtoken|io\\.grpc|net\\.logstash|io\\.github\\.oshai|io\\.github\\.microutils|\\bmu\\.KotlinLogging" },
+    { "phase": "21-null-safety-jspecify", "text": "org\\.springframework\\.lang\\.(Nullable|NonNull|NonNullApi|NonNullFields)|org\\.jspecify|NullAway|actual type is '[^']*\\?'|inferred type is \\S+\\?|Only safe \\(\\?\\.\\) or non-null asserted \\(!!\\.\\) calls are allowed" },
+    { "phase": "31-kotlin", "text": "\\bJvmTarget\\b|kotlinOptions|\\bjvmTarget\\b|compilerOptions" }
+  ]
+}

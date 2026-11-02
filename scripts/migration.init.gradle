@@ -1,0 +1,42 @@
+// Boot 4 migration helper. Lives in the pack, not in the service repo.
+// Pass with: ./gradlew --init-script <pack-root>/scripts/migration.init.gradle ...
+//
+// - Lifts the javac 100-error cap so one compile run lists every error for ownership routing.
+// - Adds `migrationResolve`, which resolves every compile/runtime/annotation-processor classpath
+//   leniently and prints one MIGRATION-RESOLVE-FAIL line per failure before failing the build.
+
+gradle.allprojects { project ->
+    project.tasks.withType(JavaCompile).configureEach { task ->
+        task.options.compilerArgs.addAll(['-Xmaxerrs', '100000'])
+    }
+
+    project.tasks.register('migrationResolve') { task ->
+        task.group = 'migration'
+        task.description = 'Resolves all classpaths leniently and reports every resolution failure.'
+        task.notCompatibleWithConfigurationCache('Resolves configurations at execution time')
+        task.doLast {
+            int failures = 0
+            project.configurations
+                .findAll { c ->
+                    c.canBeResolved && (
+                        c.name.endsWith('CompileClasspath') ||
+                        c.name.endsWith('RuntimeClasspath') ||
+                        c.name.toLowerCase().contains('annotationprocessor') ||
+                        c.name.startsWith('kapt')
+                    )
+                }
+                .each { c ->
+                    def artifacts = c.incoming.artifactView { lenient(true) }.artifacts
+                    artifacts.artifacts
+                    artifacts.failures.each { f ->
+                        failures++
+                        def first = (f.message ?: f.class.name).readLines().find { it.trim() } ?: f.class.name
+                        println "MIGRATION-RESOLVE-FAIL ${project.path} ${c.name} ${first.trim()}"
+                    }
+                }
+            if (failures > 0) {
+                throw new GradleException("migrationResolve: ${failures} resolution failure(s) in ${project.path}")
+            }
+        }
+    }
+}

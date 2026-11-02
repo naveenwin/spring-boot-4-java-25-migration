@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migration control · Java 25 · Spring Boot 4</title>
+<style>
+:root{--bg:#070d17;--panel:#0d1726;--line:#20354b;--muted:#8196ad;--text:#e6f0fb;--cyan:#55d9e8;--green:#53dfa1;--amber:#f4bd59;--red:#ff7185;--violet:#b69aff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% -20%,#19334c 0,#0a1422 42%,var(--bg) 75%);color:var(--text);font:14px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button{font:inherit;cursor:pointer}button:focus-visible,.filter:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.shell{max-width:1480px;margin:auto;padding:26px 30px 40px}
+.top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:19px;gap:20px;overflow:visible}
+.eyebrow{font-size:10px;letter-spacing:.16em;color:var(--cyan);font-weight:800}
+.brand{display:flex;align-items:center;gap:13px}
+.mark{width:64px;height:64px;flex:none;border-radius:50%;border:1px solid #34718b;background:#050a12;display:grid;place-items:center;color:var(--cyan);font-weight:750;letter-spacing:.04em}
+.title{font-size:20px;font-weight:750;letter-spacing:.02em}
+.sub{font-size:11px;color:var(--muted);margin-top:2px}
+.topright{display:flex;align-items:center;gap:20px;color:var(--muted);font-size:11px}
+.live{color:var(--green);letter-spacing:.12em;font-weight:800}
+.live:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:8px;box-shadow:0 0 10px var(--green)}
+.mission{display:flex;justify-content:space-between;align-items:end;padding:24px 0 18px;gap:16px}
+.mission h1{font-size:25px;margin:5px 0 4px;letter-spacing:-.03em}
+.mission p{color:var(--muted);margin:0;font-size:12px}
+.target{border:1px solid var(--line);background:#0b1828;padding:10px 14px;border-radius:8px;text-align:right}
+.target strong{display:block;color:var(--cyan);font-size:13px}
+.target span{font-size:10px;color:var(--muted);letter-spacing:.1em}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.stat,.panel{background:linear-gradient(145deg,#101e30dd,#0b1523f2);border:1px solid var(--line);border-radius:10px}
+.stat{padding:15px 16px;position:relative;overflow:hidden}
+.stat:after{content:"";position:absolute;right:-24px;top:-35px;width:95px;height:95px;border:1px solid #2d5067;border-radius:50%;box-shadow:0 0 0 12px #18324833,0 0 0 25px #1832481c}
+.stat .label{color:var(--muted);font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+.num{font-size:29px;font-weight:750;margin:5px 0 1px;font-variant-numeric:tabular-nums}
+.hint{font-size:10px;color:var(--muted)}
+.c-cyan{color:var(--cyan)}.c-green{color:var(--green)}.c-amber{color:var(--amber)}.c-red{color:var(--red)}.c-violet{color:var(--violet)}
+.gridmain{display:grid;grid-template-columns:1.45fr .85fr;gap:14px;margin-top:14px}
+.panel{padding:17px}
+.panelhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.panelhead h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin:0}
+.micro{font-size:10px;color:var(--muted)}
+.stages{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.stage{border:1px solid var(--line);background:#0a1421;border-radius:7px;padding:11px 10px;min-height:93px;position:relative}
+.stage.active{border-color:#2e8395;background:linear-gradient(145deg,#123244,#0c1a29)}
+.stage.done{border-color:#276c57}
+.stage .step{font-size:9px;color:var(--muted);letter-spacing:.1em}
+.stage b{display:block;font-size:12px;margin:7px 0 4px}
+.stage small{font-size:10px;color:var(--muted)}
+.stage .dot{position:absolute;right:10px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.stage.done .dot{background:var(--green);box-shadow:0 0 9px var(--green)}
+.stage.active .dot{background:var(--cyan);box-shadow:0 0 9px var(--cyan);animation:pulse 1.4s ease-in-out infinite}
+.progressrow{display:flex;justify-content:space-between;margin:17px 0 7px;font-size:10px;color:var(--muted)}
+.bar{height:7px;border-radius:8px;background:#1a2b3c;overflow:hidden}
+.bar span{display:block;height:100%;width:38%;background:linear-gradient(90deg,#2a9fb4,var(--cyan));box-shadow:0 0 12px #55d9e855;border-radius:8px}
+.gates{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gate{background:#0a1421;border:1px solid var(--line);border-radius:7px;padding:12px}
+.gate b{display:block;font-size:11px;margin-bottom:4px}
+.gate span{font-size:10px;color:var(--muted)}
+.gate .count{font-size:20px;font-weight:750;margin-top:8px}
+.lower{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:14px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter{border:1px solid var(--line);background:#0a1421;color:var(--muted);border-radius:5px;padding:8px 10px;min-height:36px}
+.filter.active{color:var(--cyan);border-color:#347d91;background:#102b3a}
+.tablewrap{overflow:auto}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:11px}
+th{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:650;padding:10px 8px;border-bottom:1px solid var(--line)}
+td{padding:11px 8px;border-bottom:1px solid #1a2a3c;vertical-align:top}
+tr.row{cursor:pointer}
+tr.row:hover td{background:#122033}
+tr.row.sel td{background:#123044}
+tr.expand td{background:#0a1421;padding:0 8px;border-bottom:1px solid #2e8395;cursor:default}
+tr.expand:hover td{background:#0a1421}
+.expand-wrap{overflow:hidden;max-height:0;opacity:0;transition:max-height .38s cubic-bezier(.22,.61,.36,1),opacity .26s ease}
+.expand-wrap.open{opacity:1}
+.expand-inner{border:1px solid #2e8395;background:#08141f;border-radius:8px;padding:12px 14px;margin:6px 0 12px}
+.expand-inner h3{margin:0 0 8px;font-size:13px}
+.expand-inner dl{display:grid;grid-template-columns:140px 1fr;gap:6px 10px;margin:8px 0 0;font-size:12px}
+.expand-inner dt{color:var(--muted)}
+.expand-inner dd{margin:0}
+.phase{font-weight:700}
+.id{color:var(--muted);font-size:9px;display:block;margin-top:2px}
+.checks{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.ck{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:20px;padding:3px 8px;font-size:9px;color:var(--muted);background:#081018}
+.ck i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.ck.done{color:var(--green);border-color:#276c57}
+.ck.live{color:var(--cyan);border-color:#2e8395}
+.ck.wait{color:var(--amber);border-color:#7a5a24}
+.ck.fail{color:var(--red);border-color:#7a3140}
+.ck.skip{color:#5b6e82}
+.q{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:#0a1421}
+.q.open{border-color:#7a5a24}
+.q .qk{font-size:10px;color:var(--muted);margin-bottom:4px}
+.q p{margin:0}
+.ans{color:var(--green);margin-top:6px}
+.feed .event{display:grid;grid-template-columns:58px 1fr;gap:9px;padding:11px 0;border-bottom:1px solid #1a2a3c}
+.feed .event:last-child{border:0}
+.time{font-size:9px;color:var(--muted);font-variant-numeric:tabular-nums}
+.event p{font-size:10px;color:var(--muted);margin:3px 0 0}
+.runs{margin-top:14px}
+.phs{display:flex;flex-wrap:wrap;gap:5px}
+.footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:#60778f;font-size:9px;margin-top:16px;letter-spacing:.06em}
+.note{color:var(--amber)}
+@keyframes pulse{50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.stage.active .dot{animation:none}.expand-wrap{transition:none}}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.gridmain,.lower{grid-template-columns:1fr}.stages{grid-template-columns:repeat(2,1fr)}.topright{display:none}.mission{display:block}.target{display:inline-block;margin-top:14px}}
+@media(max-width:520px){.shell{padding:18px 14px}.stats{grid-template-columns:1fr 1fr}.gates{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="top">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">J</div>
+    <div>
+      <div class="eyebrow">Engineering · local workspace</div>
+      <div class="title">Java 25 · Spring Boot 4 migration</div>
+      <div class="sub" id="svc">No service connected</div>
+    </div>
+  </div>
+  <div class="topright">
+    <span class="live" id="live">Not connected</span>
+    <span id="stamp">not live</span>
+  </div>
+</header>
+
+<section class="mission">
+  <div>
+    <div class="eyebrow" id="stageEyebrow">Waiting for .joker</div>
+    <h1>Migration operations</h1>
+    <p>Each work item shows versions, source, your questions, verifier, compile, and context — from <code>.joker/java-spring-migration/</code>.</p>
+  </div>
+  <div class="target"><span>Target</span><strong id="target">Spring Boot 4.1.x / Java 25</strong></div>
+</section>
+
+<section class="stats" id="stats"></section>
+
+<section class="gridmain">
+  <div class="panel">
+    <div class="panelhead"><h2>Where the migration is</h2><span class="micro" id="pos">Current: —</span></div>
+    <div class="stages" id="stages"></div>
+    <div class="progressrow"><span>Work items finished</span><strong class="c-cyan" id="pct">0 / 0 · 0%</strong></div>
+    <div class="bar"><span id="bar"></span></div>
+    <p class="micro">Counts come from <code>.joker/java-spring-migration/status.yaml</code> once the board server is running.</p>
+  </div>
+  <div class="panel">
+    <div class="panelhead"><h2>Who must decide</h2><span class="micro">Human in the loop</span></div>
+    <div class="gates" id="gates"></div>
+    <p class="micro">SAFE_AUTO proceeds when questions are closed. ASK_HUMAN waits. SPIKE_FIRST needs a small experiment first.</p>
+  </div>
+</section>
+
+<section class="lower">
+  <div class="panel">
+    <div class="panelhead">
+      <h2>Work items</h2>
+      <div class="filters" id="filters"></div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Work item</th>
+            <th>Must?</th>
+            <th>Checkpoints from .joker</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panelhead"><h2>Your questions</h2><span class="micro">status.yaml blockers</span></div>
+      <div id="inbox"></div>
+    </div>
+    <div class="panel">
+      <div class="panelhead"><h2>Latest activity</h2><span class="micro">runs · handoffs · answers</span></div>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+</section>
+<section class="panel runs">
+  <div class="panelhead"><h2>Verification runs</h2><span class="micro" id="runCount">newest first · summaries only</span></div>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Kind</th>
+          <th>Status</th>
+          <th>Work items</th>
+          <th>Summary</th>
+        </tr>
+      </thead>
+      <tbody id="runRows"></tbody>
+    </table>
+  </div>
+</section>
+<div class="footer">
+  <span>Joker pack · control room</span>
+  <span class="note" id="footNote">Start dashboard/server.py against the service repo</span>
+  <span>.joker/java-spring-migration/</span>
+</div>
+</div>
+<script>
+(function () {
+  var SNAP = {
+    live: false,
+    missing: true,
+    service: "",
+    target: "—",
+    stage: "",
+    stageLabel: "Waiting for the board server",
+    overall: "",
+    overallLabel: "Not connected",
+    counts: { total: 0, done: 0, progress: 0, human: 0, blocked: 0 },
+    gates: { ask: 0, spike: 0, auto: 0 },
+    stages: [
+      { id: "0", name: "Baseline", hint: "Build + tests recorded", state: "" },
+      { id: "A", name: "Library versions", hint: "Classpath resolves", state: "" },
+      { id: "B", name: "Code fixes", hint: "One topic, its own errors", state: "" },
+      { id: "C", name: "Runtime check", hint: "Suite vs baseline", state: "" },
+      { id: "X", name: "Closeout", hint: "You push the MR", state: "" }
+    ],
+    items: [],
+    inbox: [],
+    feed: [],
+    verificationRuns: []
+  };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+  function ck(label, kind) {
+    return '<span class="ck ' + kind + '"><i></i>' + esc(label) + "</span>";
+  }
+  function checks(it) {
+    it.slices = it.slices || {};
+    it.questions = it.questions || {};
+    var a = it.slices.A === "done" ? ck("Versions done", "done") : it.slices.A === "none" ? ck("Versions n/a", "skip") : ck("Versions open", "live");
+    var b = it.slices.B === "done" ? ck("Source done", "done") : it.slices.B === "n/a" || it.slices.B === "none" ? ck("Source n/a", "skip") : it.status === "in_progress" ? ck("Source in progress", "live") : ck("Source queued", "skip");
+    var q = it.questions.open ? ck("Waiting on you ×" + it.questions.open, "wait") : it.questions.closed ? ck("You answered", "done") : ck("No questions", "skip");
+    var v = it.verifier === "pass" ? ck("Verifier pass", "done") : it.verifier === "rework" ? ck("Verifier rework", "fail") : it.verifier === "required" ? ck("Verifier pending", "live") : ck("Verifier n/a", "skip");
+    var c = it.compileOwned > 0 ? ck("Compile " + it.compileOwned + " owned", "fail") : ck("Compile clear", "done");
+    var x = it.context === "pass" ? ck("Context loads", "done") : it.context === "fail" ? ck("Context failed", "fail") : ck("Context later", "skip");
+    return a + b + q + v + c + x;
+  }
+
+  var filt = "all";
+  var open = null;
+  var animating = false;
+  var filtersBuilt = false;
+  function apply(data) {
+    SNAP = data || SNAP;
+    if (open && open.indexOf("item:") === 0 && !(SNAP.items || []).some(function (i) { return "item:" + i.id === open; })) open = null;
+    if (open && open.indexOf("run:") === 0 && !(SNAP.verificationRuns || []).some(function (r) { return "run:" + r.id === open; })) open = null;
+  document.getElementById("svc").textContent = SNAP.live
+    ? ((SNAP.service || "This folder") + (SNAP.missing ? " · no .joker yet" : " · live from .joker"))
+    : "No service connected";
+  document.getElementById("target").textContent = SNAP.target || "—";
+  document.getElementById("live").textContent = SNAP.overallLabel || "—";
+  var stamp = document.getElementById("stamp");
+  if (stamp) stamp.textContent = !SNAP.live ? "not connected" : (SNAP.missing ? "no migration folder" : "live · local");
+  document.getElementById("stageEyebrow").textContent = SNAP.stageLabel || "";
+  document.getElementById("pos").textContent = "Current: " + String(SNAP.stageLabel || "").toLowerCase();
+  var c = SNAP.counts || { total: 0, done: 0, progress: 0, human: 0, blocked: 0 };
+  var tot = c.total || 0;
+  var pct = tot ? Math.round(c.done / tot * 100) : 0;
+  document.getElementById("pct").textContent = c.done + " / " + tot + " · " + pct + "%";
+  document.getElementById("bar").style.width = pct + "%";
+  document.getElementById("stats").innerHTML = [
+    ["Applicable", c.total, "After intake", ""],
+    ["Finished", ("0" + c.done).slice(-2), "Committed locally", "c-green"],
+    ["In progress", ("0" + c.progress).slice(-2), "Source or verifier", "c-cyan"],
+    ["Waiting on you", ("0" + c.human).slice(-2), "Open questions", "c-amber"],
+    ["Blocked", ("0" + c.blocked).slice(-2), "Cannot continue", "c-red"]
+  ].map(function (r) {
+    return '<div class="stat"><div class="label">' + r[0] + '</div><div class="num ' + r[3] + '">' + r[1] + '</div><div class="hint">' + r[2] + "</div></div>";
+  }).join("");
+  document.getElementById("stages").innerHTML = (SNAP.stages || []).map(function (s) {
+    return '<div class="stage ' + s.state + '"><i class="dot"></i><div class="step">' + s.name.toUpperCase() + "</div><b>" + s.name + "</b><small>" + s.hint + "</small></div>";
+  }).join("");
+  document.getElementById("gates").innerHTML =
+    '<div class="gate"><b class="c-amber">Waiting on you</b><span>Open human blockers</span><div class="count c-amber">' + ("0" + ((SNAP.gates || {}).ask || 0)).slice(-2) + "</div></div>" +
+    '<div class="gate"><b class="c-violet">Spike first</b><span>Small experiment first</span><div class="count c-violet">' + ("0" + ((SNAP.gates || {}).spike || 0)).slice(-2) + "</div></div>" +
+    '<div class="gate"><b class="c-green">Safe to auto</b><span>Allowlisted changes</span><div class="count c-green">' + ("0" + ((SNAP.gates || {}).auto || 0)).slice(-2) + "</div></div>";
+
+  function reduceMotion() {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+  function expandWrap() {
+    return document.querySelector("tr.expand .expand-wrap");
+  }
+  function afterSlide(el, fn) {
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      el.removeEventListener("transitionend", onEnd);
+      fn();
+    }
+    function onEnd(e) {
+      if (e.target !== el) return;
+      if (e.propertyName && e.propertyName !== "max-height") return;
+      finish();
+    }
+    el.addEventListener("transitionend", onEnd);
+    setTimeout(finish, 450);
+  }
+  function slideOpen() {
+    var wrap = expandWrap();
+    if (!wrap) { animating = false; return; }
+    if (reduceMotion()) {
+      wrap.classList.add("open");
+      wrap.style.maxHeight = "none";
+      animating = false;
+      return;
+    }
+    wrap.classList.remove("open");
+    wrap.style.maxHeight = "0px";
+    requestAnimationFrame(function () {
+      wrap.classList.add("open");
+      wrap.style.maxHeight = wrap.scrollHeight + "px";
+      afterSlide(wrap, function () {
+        wrap.style.maxHeight = "none";
+        animating = false;
+      });
+    });
+  }
+  function slideClosed(then) {
+    var wrap = expandWrap();
+    if (!wrap) { then(); return; }
+    if (reduceMotion() || !wrap.classList.contains("open")) { then(); return; }
+    wrap.style.maxHeight = wrap.scrollHeight + "px";
+    wrap.getBoundingClientRect();
+    wrap.classList.remove("open");
+    wrap.style.maxHeight = "0px";
+    afterSlide(wrap, then);
+  }
+  function paintExpand(colspan, inner, animate) {
+    return '<tr class="expand"><td colspan="' + colspan + '"><div class="expand-wrap' + (animate ? "" : " open") + '"' + (animate ? "" : ' style="max-height:none"') + ">" + inner + "</div></td></tr>";
+  }
+  function toggleOpen(key) {
+    if (animating) return;
+    if (open === key) {
+      animating = true;
+      slideClosed(function () {
+        open = null;
+        animating = false;
+        renderRows();
+        renderRuns();
+      });
+      return;
+    }
+    function show() {
+      open = key;
+      animating = true;
+      renderRows({ animate: true });
+      renderRuns({ animate: true });
+      slideOpen();
+    }
+    if (open) {
+      animating = true;
+      slideClosed(function () {
+        show();
+      });
+    } else {
+      show();
+    }
+  }
+  function itemPanel(it) {
+    it.slices = it.slices || {};
+    return '<div class="expand-inner"><h3>' + esc(it.title) + ' <span class="id">' + esc(it.id) + "</span></h3>" +
+      '<div class="checks">' + checks(it) + "</div>" +
+      "<dl>" +
+      "<dt>Library versions</dt><dd>" + esc(it.slices.A) + "</dd>" +
+      "<dt>Source / code fixes</dt><dd>" + esc(it.slices.B) + "</dd>" +
+      "<dt>Your questions</dt><dd>" + esc(it.question || it.answer || "none open") + "</dd>" +
+      "<dt>Verifier</dt><dd>" + esc(it.verifier) + "</dd>" +
+      "<dt>Compile owned</dt><dd>" + esc(it.compileOwned) + " errors on the latest compile run</dd>" +
+      "<dt>Context load</dt><dd>" + esc(it.context) + "</dd>" +
+      "<dt>Handoff</dt><dd>" + esc(it.handoff || "—") + "</dd>" +
+      "</dl></div>";
+  }
+  function runPanel(r) {
+    var facts = r.facts || [];
+    var body = facts.length
+      ? "<dl>" + facts.map(function (f) { return "<dt>" + esc(f.k) + "</dt><dd>" + esc(f.v) + "</dd>"; }).join("") + "</dl>"
+      : '<p class="micro">No extra summary beyond the headline.</p>';
+    var ph = (r.phases || []).map(function (p) {
+      return ck(p.title + (p.errors ? " · " + p.errors : ""), p.errors ? "fail" : "done");
+    }).join("");
+    return '<div class="expand-inner"><h3>' + esc(r.kindLabel) + ' <span class="id">' + esc(r.id) + "</span></h3>" +
+      '<p class="micro">' + esc(r.headline) + "</p>" +
+      (ph ? '<div class="checks">' + ph + "</div>" : "") +
+      body + "</div>";
+  }
+  function bindOpen(root) {
+    document.querySelectorAll(root + " tr.row").forEach(function (tr) {
+      tr.addEventListener("click", function () {
+        toggleOpen(tr.getAttribute("data-open"));
+      });
+    });
+  }
+  function renderRows(opts) {
+    var animate = !!(opts && opts.animate);
+    var html = [];
+    (SNAP.items || []).filter(function (it) {
+      return filt === "all" || it.filter === filt;
+    }).forEach(function (it) {
+      var key = "item:" + it.id;
+      html.push('<tr class="row' + (open === key ? " sel" : "") + '" data-open="' + esc(key) + '">' +
+        '<td><span class="phase">' + esc(it.title) + '</span><span class="id">' + esc(it.id) + " · " + esc(it.gate) + "</span>" +
+        '<div class="checks">' + checks(it) + "</div></td>" +
+        "<td>" + esc((it.priority || "").toUpperCase()) + "</td>" +
+        "<td>" + esc(String(it.status || "").replace("_", " ")) + "</td></tr>");
+      if (open === key) html.push(paintExpand(3, itemPanel(it), animate));
+    });
+    document.getElementById("rows").innerHTML = html.join("") || "<tr><td colspan=\"3\">No work items in this filter.</td></tr>";
+    bindOpen("#rows");
+  }
+  function renderRuns(opts) {
+    var animate = !!(opts && opts.animate);
+    var runRows = document.getElementById("runRows");
+    var runList = SNAP.verificationRuns || [];
+    var runCount = document.getElementById("runCount");
+    if (runCount) runCount.textContent = runList.length ? (runList.length + " runs · newest first · click a row for extra · no raw logs") : "no runs yet";
+    if (!runRows) return;
+    if (!runList.length) {
+      runRows.innerHTML = "<tr><td colspan=\"5\">No verification runs in .joker yet.</td></tr>";
+      return;
+    }
+    var html = [];
+    runList.forEach(function (r) {
+      var key = "run:" + r.id;
+      var ph = (r.phases || []).map(function (p) {
+        var extra = p.errors ? " · " + p.errors : "";
+        return '<span class="ck ' + (p.errors ? "fail" : "done") + '"><i></i>' + esc(p.title) + extra + "</span>";
+      }).join("") || '<span class="micro">—</span>';
+      html.push('<tr class="row' + (open === key ? " sel" : "") + '" data-open="' + esc(key) + '"><td>' + esc(r.when) + '<span class="id">' + esc(r.id) + "</span></td>" +
+        "<td>" + esc(r.kindLabel) + "</td>" +
+        "<td><span class=\"ck " + esc(r.tone) + "\"><i></i>" + esc(r.status) + "</span></td>" +
+        '<td><div class="phs">' + ph + "</div></td>" +
+        "<td>" + esc(r.headline) + "</td></tr>");
+      if (open === key) html.push(paintExpand(5, runPanel(r), animate));
+    });
+    runRows.innerHTML = html.join("");
+    bindOpen("#runRows");
+  }
+  if (!filtersBuilt) {
+    var filters = [
+      ["all", "All"], ["progress", "In progress"], ["human", "Need you"],
+      ["blocked", "Blocked"], ["spike", "Spike"], ["done", "Finished"], ["pending", "Queued"]
+    ];
+    document.getElementById("filters").innerHTML = filters.map(function (f, i) {
+      return '<button type="button" class="filter' + (i ? "" : " active") + '" data-f="' + f[0] + '">' + f[1] + "</button>";
+    }).join("");
+    document.querySelectorAll("#filters .filter").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        filt = btn.getAttribute("data-f");
+        document.querySelectorAll("#filters .filter").forEach(function (b) { b.classList.toggle("active", b === btn); });
+        if (open && open.indexOf("item:") === 0) {
+          var still = (SNAP.items || []).some(function (it) {
+            return "item:" + it.id === open && (filt === "all" || it.filter === filt);
+          });
+          if (!still) open = null;
+        }
+        renderRows();
+        renderRuns();
+      });
+    });
+    filtersBuilt = true;
+  }
+  document.getElementById("inbox").innerHTML = (SNAP.inbox || []).map(function (q) {
+    return '<div class="q' + (q.open ? " open" : "") + '"><div class="qk">' + (q.open ? "Open" : "You answered") + "</div><p>" + esc(q.title) + "</p>" +
+      (q.answer ? '<p class="ans">' + esc(q.answer) + "</p>" : "") +
+      '<p class="micro">' + esc(q.from) + "</p></div>";
+  }).join("");
+  document.getElementById("feed").innerHTML = (SNAP.feed || []).map(function (e) {
+    return '<div class="event"><div class="time">' + esc(e.t) + '</div><div><b class="' + esc(e.c) + '">' + esc(e.title) + "</b><p>" + esc(e.body) + "</p></div></div>";
+  }).join("");
+  if (!animating) {
+    renderRows();
+    renderRuns();
+  }
+    var note = document.getElementById("footNote");
+    if (note) {
+      note.textContent = !SNAP.live
+        ? "Start dashboard/server.py against the service repo"
+        : (SNAP.missing
+          ? "No .joker/java-spring-migration folder in this service yet"
+          : "Live · .joker/java-spring-migration/");
+    }
+  }
+  apply(SNAP);
+  function pull() {
+    fetch("/api/snapshot", { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("snapshot");
+      return r.json();
+    }).then(apply).catch(function () {});
+  }
+  pull();
+  setInterval(pull, 2000);
+})();
+</script>
+</body>
+</html>
