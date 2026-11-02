@@ -108,6 +108,8 @@ logging.level.io.micrometer.tracing: TRACE
 | Sleuth sampler rate keys | `management.tracing.sampling.probability` (name may vary by Boot line) |
 | Custom exporters | Platform Brave vs OTel bridge choice — `ASK_HUMAN` |
 
+HTTP server and client metric tag renames, and a `WebMvcTagsContributor` bean Boot no longer calls, belong to [22-actuator.md](22-actuator.md). This phase does not edit them.
+
 ### Tests
 
 When components inject `Tracer` and Sleuth auto-config is gone, provide a test `@Bean` mock `Tracer` (and `CurrentTraceContext` if required) in `@TestConfiguration` / shared test config.

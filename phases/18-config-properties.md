@@ -42,6 +42,10 @@ Confirm against the Boot 4 [Configuration Changelog](https://github.com/spring-p
 | Session | `spring.session.redis` → `spring.session.data.redis` (and similar `spring.session.data.*`) — see [stubs/spring-session.md](../stubs/spring-session.md) |
 | Actuator | Endpoint `*.enabled` → access model; probes default on — see [22-actuator.md](22-actuator.md) |
 | Kafka | Embedded-test ZooKeeper attributes are removed in [44-spring-kafka-4.md](44-spring-kafka-4.md). Leave `spring.kafka.consumer.properties.group.protocol` unset unless the human opts in |
+| Error bodies | `server.error.*` → `spring.web.error.*` (`include-message`, `include-stacktrace`, `include-exception`, `include-binding-errors`, `path`, `whitelabel`). The old key is ignored and nothing logs a warning, so the error JSON changes on the new pods only |
+| Encoding | `server.servlet.encoding.*` → `spring.servlet.encoding.*`. Same silent ignore |
+
+A repo grep and the properties migrator see files in this repository only. Spring Cloud Config, a config map, and environment variables on the deployment can still hold the old key. Record `externalConfig=asked` and stop when the service uses an external config store and the in-repo files do not contain the key. Do not query that store and do not insert a second row for the old generation. The human owns keys outside this repo.
 
 > **Open / not fully analyzed** — do not paste the entire changelog into the service; link + migrator output are the source of truth when a context start exists.
 
@@ -88,7 +92,7 @@ default Response create() { ... }
 1. Grep `ant_path_matcher`, `//` inside mapping constants, and method patterns that repeat a class-level `{variable}`. If any hit, stop for the human decision above. Do not start the migrator while that decision is open.  
 2. Add `spring-boot-properties-migrator` only for a Stage C context run, removing it in the next commit. Stage B cannot start the context, so in Stage B **leave the migrator off the classpath** and record deprecation warnings as unverified for Stage C ([13-verification.md](13-verification.md)). Do not add it “to discover keys” and leave it for later ([anti-pattern 20](../references/99-anti-patterns.md)).  
 3. When a context did start, collect migrator / deprecation warnings, then remove the dependency.  
-4. Rewrite in-repo YAML/properties/env docs to the new keys. For the collapse decision: single-slash constants, delete the path-match property, and apply the interface-default table. Actuator access-model and probe keys stay in [22-actuator.md](22-actuator.md).  
+4. Rewrite in-repo YAML/properties/env docs to the new keys, including `server.error.*` → `spring.web.error.*` and `server.servlet.encoding.*` → `spring.servlet.encoding.*` when those keys are in the repo. When the service uses an external config store and the key is not in the repo, record `externalConfig=asked` and stop. For the collapse decision: single-slash constants, delete the path-match property, and apply the interface-default table. Actuator access-model and probe keys stay in [22-actuator.md](22-actuator.md).  
 5. Re-smoke config load only when a human runs it. Do not edit generated architecture snapshots that still mention the old key.
 
 ## Do not
@@ -100,11 +104,12 @@ default Response create() { ... }
 - Treat doubled-slash mappings as single-segment and drop `ant_path_matcher` without the decision above.  
 - Rewrite a non-overridden interface default into a new relative mapping that publishes a route or captures `{variable}` twice (`ILLEGAL_DOUBLE_CAPTURE`).  
 - “Fix” generated architecture or graph files that still quote the old property.
+- Edit a config server, config map, or deployment env var from this phase. Record the gap and stop.
 
 ## Risk
 
 `SAFE_AUTO` for changelog renames that do not change which URL matches, including add → fix → remove migrator when a context start actually runs and warnings are mechanical.  
-`ASK_HUMAN` when `ant_path_matcher`, a doubled slash, or a repeated `{variable}` is present (keep-through-4.1 vs collapse-then-remove), and if a rename changes external contract (k8s env, config maps) or behavior (probes, session store).
+`ASK_HUMAN` when `ant_path_matcher`, a doubled slash, or a repeated `{variable}` is present (keep-through-4.1 vs collapse-then-remove), when a renamed key lives outside the repo, and if a rename changes external contract (k8s env, config maps) or behavior (probes, session store, error JSON, charset).
 
 ## Rollback
 
@@ -116,4 +121,4 @@ No migrator dependency (never added when the agent cannot boot; removed when it 
 
 ## Handoff
 
-`configMigrator=removed|not-added|still-present; propsFixed=yes|partial; pathMatch=kept-ant|collapsed|n/a; deprecations=unverified|clear; deferred=[…]`
+`configMigrator=removed|not-added|still-present; propsFixed=yes|partial; pathMatch=kept-ant|collapsed|n/a; externalConfig=asked|n/a; deprecations=unverified|clear; deferred=[…]`

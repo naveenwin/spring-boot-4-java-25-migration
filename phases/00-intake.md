@@ -54,10 +54,11 @@ Always run first.
 | JsonSchema2Pojo | `jsonschema2pojo` → [14](14-jsonschema2pojo.md) |
 | MapStruct | `mapstruct` / SPI → [17](17-mapstruct.md) |
 | Cucumber / WireMock | → [16](16-cucumber-8.md); `wiremock` vs `wiremock-standalone` |
-| Config property churn / routes | property renames plus `ant_path_matcher`, doubled `/` in mapping strings/constants, and method mappings that repeat a class path containing `{var}` → [18](18-config-properties.md) |
+| Config property churn / routes | property renames plus `ant_path_matcher`, doubled `/` in mapping strings/constants, method mappings that repeat a class path containing `{var}`, and `server.error.*` / `server.servlet.encoding.*` including keys that live only in an external config store → [18](18-config-properties.md) |
 | springdoc / Swagger UI | `org.springdoc`, Knife4j, Springfox → [32-springdoc-openapi.md](32-springdoc-openapi.md) |
 | JSqlParser direct use | `net.sf.jsqlparser` → [stubs/jsqlparser.md](../stubs/jsqlparser.md) |
 | Virtual threads | `spring.threads.virtual.enabled` → [stubs/virtual-threads.md](../stubs/virtual-threads.md) |
+| `@Async` / `@Scheduled` | `taskExecutor` bean name, `AsyncConfigurer`, `spring.task.scheduling` → [stubs/task-execution.md](../stubs/task-execution.md) |
 | Container / k8s rollout | Dockerfile / CrashLoop → [stubs/jvm-containers.md](../stubs/jvm-containers.md), [stubs/k8s-startup.md](../stubs/k8s-startup.md) |
 | Metrics/tracing pins | Sleuth imports/config, direct Micrometer versions, actuator `micrometer-core` excludes, legacy Prometheus keys → [07](07-observability.md), [22](22-actuator.md) |
 | Sonar Gradle plugin | Legacy `sonarqube` extension, task, or `./gradlew sonarqube` → [37](37-gitlab-ci.md). Do not inventory CI images. |

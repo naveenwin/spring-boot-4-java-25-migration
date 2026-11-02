@@ -80,7 +80,7 @@ static PostgreSQLContainer postgres =
 | CI can’t start containers | Docker/Ryuk/Podman | Ensure Docker; Podman often needs `TESTCONTAINERS_RYUK_DISABLED=true` |
 | Image tag drift | Implicit defaults gone | Pin `postgres:MAJOR-alpine` (team standard) |
 
-Optional automation: OpenRewrite `org.openrewrite.java.testing.testcontainers.Testcontainers2Migration`.
+Optional automation: OpenRewrite `org.openrewrite.java.testing.testcontainers.Testcontainers2Migration`. Pin the recipe artifact. Do not pass `-U`. Run the plugin on JDK 17 or 21, and judge the run by the diff. Do not run the whole `UpgradeToJava25` recipe. Its instance-`main` rewrite hides `main` from the Boot launcher. The greps in this phase stay the exit gate.
 
 ## Steps
 

@@ -22,6 +22,10 @@ then do not edit YAML or Java. Complete the phase with `filesTouched=[]` and han
 
 Liveness / readiness are **enabled by default** on Boot 4. Disable only with an explicit product reason.
 
+The default `readiness` group contains only `readinessState`. A probe on `/actuator/health/readiness` can stay up while the database or broker is down. A probe on `/actuator/health` includes those contributors and can flap the pod. Record which path the deployment already uses. Do not retarget the probe or add contributors. This pack does not edit the deployment manifest.
+
+`management.endpoint.health.validate-group-membership` defaults to **true**. Startup fails when a group names a contributor this process does not register (`Health contributors [kafka, mongo] in group 'readiness' do not exist`). Point the group at contributors that exist. Contributor ids follow Boot 4 names (`mongodb`, not `mongo`). Do not set the validation property to `false` to get past startup.
+
 ```yaml
 # Only if the platform must turn them off
 management:
@@ -69,6 +73,17 @@ management:
 
 Confirm exact property paths against the target Boot patch and phase 18 migrator output. These can fail silently: a green build does not prove `/actuator/prometheus` still exports or that `httpexchanges` is exposed. If the keys are already the Boot 4 names, the no-op above applies — do not rewrite them for symmetry.
 
+### HTTP metric tags
+
+These change with no compile error. Dashboards and alerts that filter the old tag go empty.
+
+| Before | After |
+|--------|--------|
+| `http.server.requests` tag `exception="None"` | `exception="none"` |
+| `http.client.requests` tag `clientName` | `client.name` (Prometheus `client_name`) |
+
+A `WebMvcTagsProvider` or `WebMvcTagsContributor` bean is ignored. URI-tag suppression stops and cardinality grows. Replacing it with an `ObservationPredicate` or `ObservationFilter` changes which requests are tagged and is `ASK_HUMAN`. Do not delete the old bean and leave suppression off.
+
 ### Micrometer pin and the actuator `micrometer-core` exclude
 
 Boot **4.1.1** manages Micrometer **1.17.1**. A Boot 2/3 service often pins **1.9.x** on `micrometer-core` and `micrometer-registry-prometheus` and excludes `micrometer-core` from the actuator starter so the pin wins. Remove the exclude and both pins in **one** change. Keep Prometheus by declaring it **without** a version when the service already exports it. Do not add a new direct 1.17 pin.
@@ -113,11 +128,12 @@ Optional parameters / nullability → JSpecify ([21-null-safety-jspecify.md](21-
 1. Inventory Actuator usage (health, info, metrics, custom endpoints, management port) and any direct Micrometer version or actuator `micrometer-core` exclude.  
 2. If exposure, probes, and Prometheus keys already match Boot 4, record `filesTouched=[]` for config and `actuatorProps=unchanged`. Do not rewrite YAML. Separately apply the Micrometer pin recipe when those pins or the exclude exist.  
 3. Otherwise align properties via migrator / changelog ([18](18-config-properties.md)), including `httptrace` → `httpexchanges` and Prometheus export keys.
-4. Confirm probe defaults match platform expectations (k8s).  
+4. Confirm probe defaults match platform expectations (k8s). Record whether readiness is the `readinessState`-only group. Fix a group that names a missing contributor. Do not disable group-membership validation.  
 5. Add modular metrics/tracing starters required after the Boot 4 split. Tracing bridge dependency swaps stay in [07](07-observability.md).  
 6. Fix custom endpoint and health-contributor package/module moves (JSpecify / API moves).
 7. Ask the human to verify health, readiness/liveness, `httpexchanges` (if intended), metrics, and Prometheus endpoints at runtime.
-8. ASK_HUMAN before changing which endpoints are exposed publicly.
+8. ASK_HUMAN before changing which endpoints are exposed publicly.  
+9. If a `WebMvcTagsContributor` or `WebMvcTagsProvider` bean exists, stop for the human before moving it to the Observation API. Tell the human the `exception` and `client.name` tag changes so dashboard owners can update queries. Do not edit the dashboards from this repo.
 
 ## Do not
 
@@ -128,11 +144,13 @@ Optional parameters / nullability → JSpecify ([21-null-safety-jspecify.md](21-
 - Edit YAML that already uses Boot 4 endpoint and Prometheus keys.  
 - Drop the Micrometer pin and leave the actuator `micrometer-core` exclude, or the reverse.  
 - Pin Micrometer 1.17 directly instead of letting the Boot BOM manage it.
+- Set `validate-group-membership=false`, or point a readiness probe at a different path, to make a group look healthy.
+- Delete a `WebMvcTagsContributor` / `WebMvcTagsProvider` bean because Boot ignores it.
 
 ## Risk
 
 `SAFE_AUTO` for the valid-config no-op (`filesTouched=[]`, `actuatorProps=unchanged`), for the Micrometer pin + exclude removal above, and for property/probe alignment and starter adds that restore prior metrics.  
-`ASK_HUMAN` for custom endpoints, security on management port, or probe disablement.
+`ASK_HUMAN` for custom endpoints, security on management port, probe disablement, retargeting a readiness probe, or moving a tags contributor to the Observation API.
 
 ## Rollback
 
@@ -144,4 +162,4 @@ Management context starts, or the no-op is recorded: first-party keys were alrea
 
 ## Handoff
 
-`actuator=ok|n/a; actuatorProps=unchanged|updated; filesTouched=<n>; probes=default|custom; healthImports=updated|n/a; micrometerPins=removed|n/a; metricsSmoke=green|deferred|n/a; askedHuman=yes|no`
+`actuator=ok|n/a; actuatorProps=unchanged|updated; filesTouched=<n>; probes=default|custom; readinessGroup=readinessState-only|custom|n/a; groupMembership=valid|fixed|n/a; metricTags=recorded|asked|n/a; healthImports=updated|n/a; micrometerPins=removed|n/a; metricsSmoke=green|deferred|n/a; askedHuman=yes|no`

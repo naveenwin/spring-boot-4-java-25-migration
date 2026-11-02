@@ -304,7 +304,7 @@ The second grep is empty except the two `exclude` lines in the runtime guard (`o
 
 9. The orchestrator's next compile shows this phase's remaining test-compile errors once main compiles. A resolved `org.junit.jupiter:junit-jupiter-api` on 5.x means a pin is still winning; return to step 1. The Boot **4.1.1** line is **6.0.3**.
 
-Optional accelerator for the JUnit 4 half: OpenRewrite `org.openrewrite.java.testing.junit5.JUnit4to5Migration`, then the same greps. The recipe can leave `org.junit.Assert` and does not delete Vintage or a Jupiter 5 pin. The greps are the exit gate.
+Optional accelerator for the JUnit 4 half: OpenRewrite `org.openrewrite.java.testing.junit5.JUnit4to5Migration`, then the same greps. The recipe can leave `org.junit.Assert` and does not delete Vintage or a Jupiter 5 pin. The greps are the exit gate. Pin the recipe artifact. Do not pass `-U`: resolution can fail quietly and the build still says success with almost no files changed. Run the plugin on JDK 17 or 21. It compiles the pre-migration build, and Lombok does not run on JDK 25. Do not run the whole `UpgradeToJava25` recipe. Its instance-`main` rewrite hides `main` from the Boot launcher. Judge the run by the diff, not by BUILD SUCCESS.
 
 ## Do not
 

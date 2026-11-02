@@ -228,6 +228,10 @@ A request such as `/items//assign` or `/items/{id}/move` with an empty `{id}` ha
 
 See anti-pattern **35f**.
 
+#### A `ServletException` handler turns that 404 into a 500
+
+`NoResourceFoundException` extends `ServletException`. An `@ExceptionHandler(ServletException.class)`, or a broader `Exception` handler that does not let this type through, owns the 404. The client receives **500**, and every probe hit on `/` logs a stack trace. Give `NoResourceFoundException` its own outcome so the status stays 404: the `handleNoResourceFoundException` override when the advice extends `ResponseEntityExceptionHandler`, otherwise a more specific `@ExceptionHandler`. Status and body still follow the `errorBodyContract` decision. Do not add that handler on the `SAFE_AUTO` path. See anti-pattern **35h**.
+
 > **Open / not fully analyzed** — JUnit 6 nested `SpringExtension` scope (`spring.test.extension.context.scope`); pausing test contexts (`spring.test.context.cache.pause`).
 
 ### Cucumber / WireMock
@@ -246,7 +250,7 @@ Exit `test-classic` via [19-modular-starters.md](19-modular-starters.md) when fo
 6. Fix MockMvc / security test annotations packages; use `addFilters = false` only when filters block unauthenticated slice tests.  
 7. Harden faker-driven success paths at **shared generators**.  
 8. Split unit vs Cucumber Gradle tasks / CI jobs when both exist.  
-9. If tests assert empty error bodies, ask the human to choose `errorBodyContract=empty` or `problem-detail` before editing production advice. On `problem-detail`, update test assertions only. On `empty`, apply the approved overrides and list the production files in the handoff.  
+9. If tests assert empty error bodies, ask the human to choose `errorBodyContract=empty` or `problem-detail` before editing production advice. On `problem-detail`, update test assertions only. On `empty`, apply the approved overrides and list the production files in the handoff. When advice handles `ServletException` or `Exception`, include `NoResourceFoundException` in that same decision so a 404 does not become a 500.  
 10. If Cucumber/WireMock present → schedule [16-cucumber-8.md](16-cucumber-8.md) (ASK_HUMAN for first Cucumber 8 cutover).
 
 ## Do not
@@ -257,7 +261,8 @@ Exit `test-classic` via [19-modular-starters.md](19-modular-starters.md) when fo
 - Assume `@SpringBootTest` alone wires MockMvc / TestRestTemplate.  
 - Add `@AutoConfigureMockMvc` to every `@SpringBootTest`, or convert a port-based test to MockMvc to get it compiling.  
 - Run a rewrite loop without the dry-run list, over build/generated output, or with unanchored patterns.  
-- Force a pre-migration status for empty-segment URLs with catch-all mappings or duplicate `@ExceptionHandler` methods.  
+- Force a pre-migration status for empty-segment URLs with catch-all mappings or duplicate `@ExceptionHandler` methods.
+- Leave a `ServletException` or `Exception` handler owning `NoResourceFoundException`.  
 - Change production error bodies, or apply the empty-body `ResponseEntityExceptionHandler` overrides, before the human chooses `errorBodyContract`.  
 - Fold a full Cucumber 8 modernization into this phase without using phase 16.  
 - Pin faker only in one test while generators still randomize status/amount.  
@@ -277,4 +282,4 @@ The latest compile ran test compilation (`compileTestKotlin` / `compileTestJava`
 
 ## Handoff
 
-`phase36Gate=pass; testsCompile=yes|no; mockitoBean=yes|n/a; mockBeanResidual=0|[files]; portTestsMockMvc=none-added|[files]; errorBodyContract=empty|problem-detail|n/a; adviceFiles=[production paths]|n/a; emptySegment404=asserted|override|n/a; jsonPath=3.x|n/a; cucumberPhase=16|n/a`
+`phase36Gate=pass; testsCompile=yes|no; mockitoBean=yes|n/a; mockBeanResidual=0|[files]; portTestsMockMvc=none-added|[files]; errorBodyContract=empty|problem-detail|n/a; adviceFiles=[production paths]|n/a; emptySegment404=asserted|override|n/a; servlet404=specific|left|n/a; jsonPath=3.x|n/a; cucumberPhase=16|n/a`

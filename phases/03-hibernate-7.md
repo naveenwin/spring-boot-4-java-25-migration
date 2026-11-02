@@ -35,6 +35,9 @@ Any of:
 - `StatelessSession` + second-level cache, or Hypersistence bulk APIs that use it
 - Custom `Interceptor` / `Integrator` / `Configurable` ID generators / `UserType#nullSafeGet|Set`
 - Native queries expecting `java.sql.Date` / `Timestamp` without `@SqlResultSetMapping`
+- `Query#stream()` / `getResultStream()` not closed by try-with-resources
+- `@Transactional(readOnly = true)` on a method that mutates a lazy association
+- A fetch-joined collection query passed to a Spring Data `Page`
 - Bulk HQL/JPQL update/delete against `@Immutable` entities
 - Criteria `Path#get("subtypeAttr")` without `CriteriaBuilder#treat`
 - Maven enhance plugin under old coordinates (`hibernate-enhance-maven-plugin` / non-`org.hibernate.orm` group)
@@ -348,7 +351,11 @@ cb.treat(path, Subtype.class).get("subtypeOnlyAttribute");
 query.setResultListTransformer(ResultListTransformer.uniqueResultTransformer());
 ```
 
-Pagination / limit **with collection fetch** (**H7.4+**): limit is applied in SQL. Old in-memory limit: query hint `org.hibernate.limitInMemory`.
+Pagination / limit **with collection fetch** (**H7.4+**): the limit is applied in SQL, so a Spring Data `Page` whose query fetch-joins a collection counts joined rows and returns the wrong page. Prefer `@EntityGraph` or a page of ids followed by a fetch. The hint `org.hibernate.limitInMemory` restores the old in-memory limit and is `ASK_HUMAN`, not the default.
+
+`Query#stream()` / `getResultStream()` no longer close the underlying cursor. Hours or days later the database reports that the maximum number of open cursors is exceeded. Close every stream with try-with-resources. A unit test that never opens the stream stays green.
+
+`@Transactional(readOnly = true)` (**H7.3+**): mutating a lazy collection inside that transaction throws. Drop `readOnly` on the method that writes, or move the write to its own transaction. This is separate from a read-only entity mapping.
 
 Immutable entities: bulk update/delete now **fail by default**. Temporary escape (prefer fixing the query):
 
@@ -357,6 +364,10 @@ hibernate.query.immutable_entity_update_query_handling_mode=allow
 ```
 
 Read-only entities (**H7.3+**): collections are read-only too — mutating them errors.
+
+### Timezone storage
+
+`hibernate.timezone.default_storage=DEFAULT` can validate an `Instant` or timestamp column as `TIMESTAMP WITH TIME ZONE` against an existing `TIMESTAMP`, and the stored instant can shift by the JVM offset. Do not set `NORMALIZE` or `hibernate.jdbc.time_zone` to clear that. `NORMALIZE` writes using the JVM default zone, so a pod that starts in a different zone during a mixed rollout writes shifted values into the same column. That write is not reversible. `hibernate.jdbc.time_zone` shifts `LocalDateTime`, `Date`, and `Timestamp` values rather than fixing one column. This pack does not edit container timezone settings. The mismatch is `ASK_HUMAN`, coordinated with [08-flyway-db.md](08-flyway-db.md) when the fix is DDL.
 
 Timeout when the DB marks the tx rollback-only (**H7.3+**): may surface as `PersistenceException` instead of `QueryTimeoutException` / `LockTimeoutException` — update catch blocks.
 
@@ -381,7 +392,7 @@ Misplaced annotations fail bootstrap — fix placement; do not silence with DDL 
 | `PostgreSQL95Dialect` / versioned dialects | → `PostgreSQLDialect` (let JDBC metadata pick version) |
 | Community dialects on old artifact | Move to `hibernate-community-dialects` or new FQCN (e.g. Spanner PG dialect moved into core in 7.4) |
 | `hibernate.multiTenancy` / `MultiTenancyStrategy` | Removed — drop; use current multi-tenant connection provider APIs |
-| Implicit `@GeneratedValue` / shared `hibernate_sequence` | H6+ uses per-entity `*_seq` and allocation size **50** by default; set `hibernate.id.db_structure_naming_strategy=legacy` (or `single`) only with human OK + Flyway alignment |
+| Implicit `@GeneratedValue` / shared `hibernate_sequence` | H6+ uses per-entity `*_seq` and allocation size **50** by default. The first insert then fails with a missing sequence. While old and new pods write the same table, that allocation size also collides with the old generator. Set `hibernate.id.db_structure_naming_strategy=legacy` (or `single`) only with human OK + Flyway alignment |
 | `@SequenceGenerator` only on one subclass of a `@MappedSuperclass` | Metadata does not cover siblings that share the sequence. See the mapped-superclass section below |
 | Standalone entity scan | May need `hibernate-scan-jandex` |
 | `ValidationMode.AUTO` + broken BV factory | Exception now **propagates** (was swallowed) |
@@ -480,14 +491,16 @@ Remove calls to deleted `Interceptor` overloads that still used `Serializable` i
 - Blindly set `immutable_entity_update_query_handling_mode=allow` or `xml_format_mapper.legacy_format=true` as permanent fixes.  
 - Add `hypersistence-utils-hibernate-73` when no field consumes the registered type — delete the dead registration and the old coordinate instead.  
 - Rewrite `JpaRepository.save` / `delete`, or a domain method named `merge`, because a Session-method grep matched the name.  
-- Set `allocationSize` without reading the database sequence INCREMENT, or leave generator metadata only on one subclass of a shared `@MappedSuperclass`.  
+- Set `allocationSize` without reading the database sequence INCREMENT, or leave generator metadata only on one subclass of a shared `@MappedSuperclass`.
+- Leave a `Query#stream()` or `getResultStream()` unclosed.
+- Set `hibernate.timezone.default_storage=NORMALIZE` or `hibernate.jdbc.time_zone` to silence a column-type or offset mismatch.  
 - Add `@EntityGraph` before the test-glue finder inventory is complete.  
 - Edit native SQL, a custom `EntityManagerFactory`, the metamodel processor, or Spring Data repository APIs in this phase.
 
 ## Risk
 
 `SAFE_AUTO` for deleting dead `@TypeDef` registrations with zero field consumers, an approved Hypersistence coordinate-only bump when the existing field mapping is unchanged and no custom `UserType` is involved, straightforward annotation renames, and Session API renames whose receiver is actually a `Session`.
-`ASK_HUMAN` for Persistable cutover, `update`→`merge` on versioned graphs, native queries, JSON/XML column shape changes, sequence naming strategy, **`allocationSize` vs the database INCREMENT** on a mapped superclass, any Flyway/DDL, and exception-type changes in timeout handlers.
+`ASK_HUMAN` for Persistable cutover, `update`→`merge` on versioned graphs, native queries, JSON/XML column shape changes, sequence naming strategy, **`allocationSize` vs the database INCREMENT** on a mapped superclass, any Flyway/DDL, timezone-storage or `limitInMemory` escapes, and exception-type changes in timeout handlers.
 `SPIKE_FIRST` for a live custom `UserType`, a custom generator that will not compile, inventing a new ID strategy instead of Persistable, or Envers → core `@Audited` migration (optional in 7.4 — Envers still works; do not migrate unless requested).
 
 ## Rollback
@@ -500,4 +513,4 @@ JPA entities compile against Boot-managed Hibernate 7.x; no leftover `@TypeDef` 
 
 ## Handoff
 
-`hibernate7=ok; bootHibernate=7.2|7.4|other; bootHibernateSource=matrix|resolved; typeLibrary=removed-dead|migrated|n/a; jsonStrategy=Map|POJO|mixed|n/a; uuidStrategy=assigned+Persistable|generator|n/a; writeApi=merge|update|save; sessionApi=migrated|n/a; sequenceMetadata=superclass-aligned|n/a|asked; lazyFinders=pre-inventoried|n/a; askedHuman=yes|no`
+`hibernate7=ok; bootHibernate=7.2|7.4|other; bootHibernateSource=matrix|resolved; typeLibrary=removed-dead|migrated|n/a; jsonStrategy=Map|POJO|mixed|n/a; uuidStrategy=assigned+Persistable|generator|n/a; writeApi=merge|update|save; sessionApi=migrated|n/a; sequenceMetadata=superclass-aligned|n/a|asked; queryStreams=closed|n/a; timezoneStorage=unchanged|asked|n/a; lazyFinders=pre-inventoried|n/a; askedHuman=yes|no`

@@ -105,7 +105,7 @@ deserializer.addTrustedPackages("com.example.orders");
 
 1. Inventory starter, `spring-kafka-test`, `@EmbeddedKafka`, `EmbeddedKafkaZKBroker`, `BackOffPolicy` on Kafka types, `JsonSerializer` / `JsonDeserializer`, and `StreamsBuilderFactoryBeanCustomizer`.
 2. Stage A: replace `spring-kafka-test` with `spring-boot-starter-kafka-test`. Leave `spring-kafka` on the Boot BOM. Do not pin either.
-3. Stage B: apply the tables above. Optional accelerator, only when step 1 found source hits: OpenRewrite `org.openrewrite.java.spring.kafka.UpgradeSpringKafka_4_0`. The greps below are still the exit gate. The recipe does not decide `group.protocol`.
+3. Stage B: apply the tables above. Optional accelerator, only when step 1 found source hits: OpenRewrite `org.openrewrite.java.spring.kafka.UpgradeSpringKafka_4_0`. Pin the recipe artifact. Do not pass `-U`. Run the plugin on JDK 17 or 21, and judge the run by the diff. Do not run the whole `UpgradeToJava25` recipe. Its instance-`main` rewrite hides `main` from the Boot launcher. The greps below are still the exit gate. The recipe does not decide `group.protocol`.
 4. Grep. Zero hits required:
 
 ```text
