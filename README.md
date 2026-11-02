@@ -10,7 +10,7 @@ Plan and migrate this service to Java 25 / Spring Boot 4 using <path-to-pack>/SK
 
 Open that chat in the **service** repo. Pass the path to this pack. Operator detail is in [MANUAL.md](MANUAL.md).
 
-![Migration execution flow: kickoff and intake, catalog gap and plan approval, baseline through stages A–C, handoffs and closeout](docs/images/migration-execution-dashboard.jpg)
+![Java 25 and Spring Boot 4 migration end-to-end workflow: intake, plan, stages A–C, multi-chat handoffs, and closeout](docs/images/migration-execution-dashboard.jpg)
 
 The diagram is a map, not a checklist. Stage gates, fresh workers per phase, and when to start a new chat are spelled out in [MANUAL.md](MANUAL.md) and [references/CONTEXT-CONTROL.md](references/CONTEXT-CONTROL.md).
 
