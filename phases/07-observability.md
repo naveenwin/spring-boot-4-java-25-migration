@@ -69,6 +69,8 @@ ExecutorService tracedExecutor(ThreadPoolTaskExecutor delegate) {
 // Injected field type: ExecutorService (not TraceableExecutorService)
 ```
 
+Boot task-executor and scheduling-pool behavior is [45-task-execution.md](45-task-execution.md), not this phase.
+
 ### Types and annotations
 
 ```java

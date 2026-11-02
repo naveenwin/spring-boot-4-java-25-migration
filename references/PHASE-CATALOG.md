@@ -18,6 +18,7 @@ Compile-error ownership for Stage B is [ownership.json](ownership.json).
 | [37-gitlab-ci](../phases/37-gitlab-ci.md) | Legacy `sonarqube` extension, task, or `./gradlew sonarqube` | n/a |
 | [38](../phases/38-remove-vavr.md), [39](../phases/39-remove-or-migrate-shadow.md), [40](../phases/40-resilience4j-boot4.md), [41](../phases/41-spring-retry-framework.md) | Detect hits | n/a |
 | [44-spring-kafka-4](../phases/44-spring-kafka-4.md) | `spring-boot-starter-kafka`, `spring-kafka`, `spring-kafka-test`, `@KafkaListener`, or `@EmbeddedKafka` | n/a |
+| [45-task-execution](../phases/45-task-execution.md) | `@Async`, `@Scheduled`, `AsyncConfigurer`, a `taskExecutor` / `applicationTaskExecutor` bean, or `spring.task.execution` / `spring.task.scheduling` | n/a |
 | [23-over-engineer-gate](../phases/23-over-engineer-gate.md) | Never by default — the human asks, or the planner inserts it once after Stage B when the diff is large | `good` |
 
 ## Order
@@ -48,26 +49,27 @@ Compile-error ownership for Stage B is [ownership.json](ownership.json).
 | 20 | [20-spring-security-7](../phases/20-spring-security-7.md) | main | SPIKE_FIRST / ASK_HUMAN |
 | 21 | [07-observability](../phases/07-observability.md) | main | SAFE_AUTO when Sleuth present |
 | 22 | [22-actuator](../phases/22-actuator.md) | main | SAFE_AUTO props; ASK_HUMAN exposure |
-| 23 | [21-null-safety-jspecify](../phases/21-null-safety-jspecify.md) | main | ASK_HUMAN for NullAway / Kotlin cascade |
-| 24 | [08-flyway-db](../phases/08-flyway-db.md) | main | SAFE_AUTO module/version align with SQL frozen; ASK_HUMAN for SQL or locations |
-| 25 | [10-build-plugins](../phases/10-build-plugins.md) | build | SAFE_AUTO Spotless 7 / GJF |
-| 26 | [14-jsonschema2pojo](../phases/14-jsonschema2pojo.md) | main | SAFE_AUTO after generate smoke |
-| 27 | [17-mapstruct](../phases/17-mapstruct.md) | main | SAFE_AUTO |
-| 28 | [29-nimbus-jose-jwt-10](../phases/29-nimbus-jose-jwt-10.md) | main | ASK_HUMAN |
-| 29 | [30-launchdarkly-7](../phases/30-launchdarkly-7.md) | main | ASK_HUMAN — `LDUser` → `LDContext` |
-| 30 | [11-distributed-lock](../phases/11-distributed-lock.md) | main | ASK_HUMAN if replace |
-| 31 | [38-remove-vavr](../phases/38-remove-vavr.md) | main | analysis + risk score; remove/replace or park |
-| 32 | [39-remove-or-migrate-shadow](../phases/39-remove-or-migrate-shadow.md) | build | prefer drop, else gradleup 9.6.x |
-| 33 | [40-resilience4j-boot4](../phases/40-resilience4j-boot4.md) | main | boot3 → boot4 2.4.0 |
-| 34 | [12-dependency-bump-queue](../phases/12-dependency-bump-queue.md) | main | SAFE_AUTO for approved catalog targets |
-| 35 | [36-junit-jupiter](../phases/36-junit-jupiter.md) | test | SAFE_AUTO for Boot-managed JUnit 6; ASK_HUMAN for JUnit 4 rules / parameterized / message-first asserts |
-| 36 | [28-okhttp-5](../phases/28-okhttp-5.md) | test | SPIKE_FIRST when tests use MockWebServer |
-| 37 | [09-testing](../phases/09-testing.md) | test | SAFE_AUTO for the Boot test surface; ASK_HUMAN before a production error-body override |
-| 38 | [25-testcontainers-2](../phases/25-testcontainers-2.md) | test | SAFE_AUTO when declared-only; SPIKE_FIRST when used |
-| 39 | [26-rest-assured-6](../phases/26-rest-assured-6.md) | test | ASK_HUMAN |
-| 40 | [27-mockserver-9](../phases/27-mockserver-9.md) | test | ASK_HUMAN |
-| 41 | [16-cucumber-8](../phases/16-cucumber-8.md) | test | often `good` + medium |
-| 42 | [13-verification](../phases/13-verification.md) | Stage C | context + suite vs baseline |
+| 23 | [45-task-execution](../phases/45-task-execution.md) | main | SAFE_AUTO for the auto-config name and a null `getAsyncExecutor`; ASK_HUMAN for an alias, a pool size, or renaming a custom executor |
+| 24 | [21-null-safety-jspecify](../phases/21-null-safety-jspecify.md) | main | ASK_HUMAN for NullAway / Kotlin cascade |
+| 25 | [08-flyway-db](../phases/08-flyway-db.md) | main | SAFE_AUTO module/version align with SQL frozen; ASK_HUMAN for SQL or locations |
+| 26 | [10-build-plugins](../phases/10-build-plugins.md) | build | SAFE_AUTO Spotless 7 / GJF |
+| 27 | [14-jsonschema2pojo](../phases/14-jsonschema2pojo.md) | main | SAFE_AUTO after generate smoke |
+| 28 | [17-mapstruct](../phases/17-mapstruct.md) | main | SAFE_AUTO |
+| 29 | [29-nimbus-jose-jwt-10](../phases/29-nimbus-jose-jwt-10.md) | main | ASK_HUMAN |
+| 30 | [30-launchdarkly-7](../phases/30-launchdarkly-7.md) | main | ASK_HUMAN — `LDUser` → `LDContext` |
+| 31 | [11-distributed-lock](../phases/11-distributed-lock.md) | main | ASK_HUMAN if replace |
+| 32 | [38-remove-vavr](../phases/38-remove-vavr.md) | main | analysis + risk score; remove/replace or park |
+| 33 | [39-remove-or-migrate-shadow](../phases/39-remove-or-migrate-shadow.md) | build | prefer drop, else gradleup 9.6.x |
+| 34 | [40-resilience4j-boot4](../phases/40-resilience4j-boot4.md) | main | boot3 → boot4 2.4.0 |
+| 35 | [12-dependency-bump-queue](../phases/12-dependency-bump-queue.md) | main | SAFE_AUTO for approved catalog targets |
+| 36 | [36-junit-jupiter](../phases/36-junit-jupiter.md) | test | SAFE_AUTO for Boot-managed JUnit 6; ASK_HUMAN for JUnit 4 rules / parameterized / message-first asserts |
+| 37 | [28-okhttp-5](../phases/28-okhttp-5.md) | test | SPIKE_FIRST when tests use MockWebServer |
+| 38 | [09-testing](../phases/09-testing.md) | test | SAFE_AUTO for the Boot test surface; ASK_HUMAN before a production error-body override |
+| 39 | [25-testcontainers-2](../phases/25-testcontainers-2.md) | test | SAFE_AUTO when declared-only; SPIKE_FIRST when used |
+| 40 | [26-rest-assured-6](../phases/26-rest-assured-6.md) | test | ASK_HUMAN |
+| 41 | [27-mockserver-9](../phases/27-mockserver-9.md) | test | ASK_HUMAN |
+| 42 | [16-cucumber-8](../phases/16-cucumber-8.md) | test | often `good` + medium |
+| 43 | [13-verification](../phases/13-verification.md) | Stage C | context + suite vs baseline |
 
 ### Reference index (same folder)
 
@@ -85,4 +87,4 @@ Compile-error ownership for Stage B is [ownership.json](ownership.json).
 
 ### Stubs (Detect → use or skip)
 
-[maven](../stubs/maven.md) · [mongodb](../stubs/mongodb.md) · [r2dbc](../stubs/r2dbc.md) · [aot-native](../stubs/aot-native.md) · [amqp](../stubs/amqp.md) · [batch](../stubs/batch.md) · [spring-session](../stubs/spring-session.md) · [http-service-clients](../stubs/http-service-clients.md) · [dependency-diagnosis](../stubs/dependency-diagnosis.md) · [jsqlparser](../stubs/jsqlparser.md) · [virtual-threads](../stubs/virtual-threads.md) · [task-execution](../stubs/task-execution.md) · [jvm-containers](../stubs/jvm-containers.md) · [postgresql-tls](../stubs/postgresql-tls.md) · [k8s-startup](../stubs/k8s-startup.md)
+[maven](../stubs/maven.md) · [mongodb](../stubs/mongodb.md) · [r2dbc](../stubs/r2dbc.md) · [aot-native](../stubs/aot-native.md) · [amqp](../stubs/amqp.md) · [batch](../stubs/batch.md) · [spring-session](../stubs/spring-session.md) · [http-service-clients](../stubs/http-service-clients.md) · [dependency-diagnosis](../stubs/dependency-diagnosis.md) · [jsqlparser](../stubs/jsqlparser.md) · [virtual-threads](../stubs/virtual-threads.md) · [jvm-containers](../stubs/jvm-containers.md) · [postgresql-tls](../stubs/postgresql-tls.md) · [k8s-startup](../stubs/k8s-startup.md)

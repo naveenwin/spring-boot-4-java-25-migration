@@ -58,7 +58,7 @@ Always run first.
 | springdoc / Swagger UI | `org.springdoc`, Knife4j, Springfox → [32-springdoc-openapi.md](32-springdoc-openapi.md) |
 | JSqlParser direct use | `net.sf.jsqlparser` → [stubs/jsqlparser.md](../stubs/jsqlparser.md) |
 | Virtual threads | `spring.threads.virtual.enabled` → [stubs/virtual-threads.md](../stubs/virtual-threads.md) |
-| `@Async` / `@Scheduled` | `taskExecutor` bean name, `AsyncConfigurer`, `spring.task.scheduling` → [stubs/task-execution.md](../stubs/task-execution.md) |
+| `@Async` / `@Scheduled` | `taskExecutor` bean name, `AsyncConfigurer`, `spring.task.scheduling` → [45](45-task-execution.md) |
 | Container / k8s rollout | Dockerfile / CrashLoop → [stubs/jvm-containers.md](../stubs/jvm-containers.md), [stubs/k8s-startup.md](../stubs/k8s-startup.md) |
 | Metrics/tracing pins | Sleuth imports/config, direct Micrometer versions, actuator `micrometer-core` excludes, legacy Prometheus keys → [07](07-observability.md), [22](22-actuator.md) |
 | Sonar Gradle plugin | Legacy `sonarqube` extension, task, or `./gradlew sonarqube` → [37](37-gitlab-ci.md). Do not inventory CI images. |
